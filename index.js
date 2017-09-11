@@ -320,7 +320,12 @@ ExtractTextPlugin.prototype.apply = function(compiler) {
 		compilation.plugin("additional-assets", function(callback) {
 			extractedChunks.forEach(function(extractedChunk) {
 				if(extractedChunk.modules.length) {
-					extractedChunk.modules.sort(function(a, b) {
+					// HACK: Fix the CSS ordering issue present in 2.1.2 without needing to move to
+					// version 3.0.0 which breaks reloading in webpack-dev-server.
+					// See:
+					//      https://github.com/webpack-contrib/extract-text-webpack-plugin/issues/548
+					//      https://github.com/webpack-contrib/extract-text-webpack-plugin/issues/579
+					extractedChunk.modules = extractedChunk.modules.sort(function(a, b) {
 						if(!options.ignoreOrder && isInvalidOrder(a, b)) {
 							compilation.errors.push(new OrderUndefinedError(a.getOriginalModule()));
 							compilation.errors.push(new OrderUndefinedError(b.getOriginalModule()));
@@ -337,7 +342,7 @@ ExtractTextPlugin.prototype.apply = function(compiler) {
 					});
 
 					var file = (isFunction(filename)) ? filename(getPath) : getPath(filename);
-					
+
 					compilation.assets[file] = source;
 					chunk.files.push(file);
 				}
